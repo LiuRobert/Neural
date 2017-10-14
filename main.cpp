@@ -16,6 +16,7 @@ int main()
 	Game game;
 	Menu menu;
 	Renderer renderer;
+
 	NeuralNet net(126, 7, 1);
 	net.setNeuronCountInLayer(0, 100);
 	net.init();
@@ -28,8 +29,19 @@ int main()
 		else
 			input[i] = 1.0;
 	}
+
 	output = net.think(input);
-	
+	for (int i = 0; i < 7; i++)
+	{
+		std::cout << output[i] << std::endl;
+	}
+
+	net.save("test.nn");
+	net.load("test.nn");
+
+	std::cout << std::endl;
+
+	output = net.think(input);
 	for (int i = 0; i < 7; i++)
 	{
 		std::cout << output[i] << std::endl;

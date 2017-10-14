@@ -13,6 +13,7 @@ NeuralNet::NeuralNet(int numberOfInputs, int numberOfOutputs, int numberOfHidden
 
 NeuralNet::~NeuralNet()
 {
+	delete[] layers;
 }
 
 void NeuralNet::setNeuronCountInLayer(int layer, int numberOfNeurons)
@@ -27,12 +28,67 @@ int NeuralNet::getNeuronCountInLayer(int layer)
 
 void NeuralNet::save(const std::string & filename)
 {
+	std::ofstream stream(filename, std::ios::binary);
+	int inputCount, neuronCount;
+	float * f;
+	stream.write(reinterpret_cast<const char*>(&nLayers), sizeof(int));
 
+	for (int i = 0; i < nLayers; i++)
+	{
+		inputCount = layers[i].getInputCount();
+		stream.write(reinterpret_cast<const char*>(&inputCount), sizeof(int));
+		neuronCount = layers[i].getNeuronCount();
+		stream.write(reinterpret_cast<const char*>(&neuronCount), sizeof(int));
+
+		f = layers[i].getWeights();
+		for (int j = 0; j < inputCount * neuronCount; j++)
+		{
+			stream.write(reinterpret_cast<const char*>(&f[j]), sizeof(float));
+		}
+
+		f = layers[i].getBiases();
+		for (int j = 0; j < inputCount; j++)
+		{
+			stream.write(reinterpret_cast<const char*>(&f[j]), sizeof(float));
+		}
+	}
+
+	stream.close();
 }
 
 void NeuralNet::load(const std::string & filename)
 {
+	if (layers != nullptr)
+		delete[] layers;
 
+	std::ifstream stream(filename, std::ios::binary);
+	int inputCount;
+	int neuronCount;
+
+	stream.read(reinterpret_cast<char*>(&nLayers), sizeof(int));
+	layers = new Layer[nLayers];
+
+	for (int i = 0; i < nLayers; i++)
+	{
+		stream.read(reinterpret_cast<char*>(&inputCount), sizeof(int));
+		stream.read(reinterpret_cast<char*>(&neuronCount), sizeof(int));
+
+		// Will be deleted by the destructor in Layer
+		float * weights = new float[inputCount * neuronCount];
+		float * biases = new float[inputCount];
+		for (int j = 0; j < inputCount * neuronCount; j++)
+		{
+			stream.read(reinterpret_cast<char*>(&weights[j]), sizeof(float));
+		}
+		for (int j = 0; j < inputCount; j++)
+		{
+			stream.read(reinterpret_cast<char*>(&biases[j]), sizeof(float));
+		}
+
+		layers[i].load(weights, biases, inputCount, neuronCount);
+	}
+
+	stream.close();
 }
 
 void NeuralNet::init()
@@ -59,23 +115,3 @@ float * NeuralNet::think(float * input)
 	}
 	return output;
 }
-
-
-/*
-int NeuralNet::makeMove(const int * board)
-{
-	for (int i = 0; i < 42; i++)
-	{
-		if (board[i] == 1)
-			input[i] = 1.0f;
-		else
-			input[i] = 0.0f;
-
-		if (board[i] == 2)
-			input[42 + i] = 1.0f;
-		else
-			input[42 + i] = 0.0f;
-	}
-	return 0;
-}
-*/

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#include <iostream>
 
 float randomFloat()
 {
@@ -13,37 +14,49 @@ float randomFloat()
 Layer::Layer()
 {
 	srand(time(NULL));
-	nNeurons = -1;
-	nInputs = -1;
+	_neuronCount = -1;
+	_intputCount = -1;
 }
-
-void Layer::init()
-{
-	if (nNeurons < 0)
-		throw "Number of neurons not set or below zero when initalizing layer";
-
-	if (nInputs < 0)
-		throw "Number of inputs not set or below zero when initalizing layer";
-
-	int nWeights = nInputs * nNeurons;
-	weights = new float[nWeights];
-	biases = new float[nInputs];
-	output = new float[nNeurons];
-
-	for (int i = 0; i < nWeights; i++)
-	{
-		weights[i] = randomFloat();
-	}
-	for (int i = 0; i < nInputs; i++)
-	{
-		biases[i] = randomFloat();
-	}
-}
-
 
 Layer::~Layer()
 {
+	delete[] _weights;
+	delete[] _biases;
 }
+
+void Layer::load(float * weights, float * biases, int inputCount, int neuronCount)
+{
+	_weights = weights;
+	_biases = biases;
+	_intputCount = inputCount;
+	_neuronCount = neuronCount;
+	_neurons = new float[_neuronCount];
+}
+
+
+void Layer::init()
+{
+	if (_neuronCount < 1)
+		throw "Number of neurons not set or below one when initalizing layer";
+
+	if (_intputCount < 1)
+		throw "Number of inputs not set or below one when initalizing layer";
+
+	int nWeights = _intputCount * _neuronCount;
+	_weights = new float[nWeights];
+	_biases = new float[_intputCount];
+	_neurons = new float[_neuronCount];
+
+	for (int i = 0; i < nWeights; i++)
+	{
+		_weights[i] = randomFloat();
+	}
+	for (int i = 0; i < _intputCount; i++)
+	{
+		_biases[i] = randomFloat();
+	}
+}
+
 
 float sigmoid(const float value)
 {
@@ -52,35 +65,45 @@ float sigmoid(const float value)
 
 float * Layer::think(const float * input)
 {
-	for (int i = 0; i < nNeurons; i++)
+	for (int i = 0; i < _neuronCount; i++)
 	{
 		float sum = 0;
-		for (int j = 0; j < nInputs; j++)
+		for (int j = 0; j < _intputCount; j++)
 		{
-			sum += input[j] * weights[nInputs * i + j];
+			sum += input[j] * _weights[_intputCount * i + j];
 		}
-		sum -= biases[i];
-		output[i] = sigmoid(sum);
+		sum -= _biases[i];
+		_neurons[i] = sigmoid(sum);
 	}
-	return output;
+	return _neurons;
 }
 
 void Layer::setInputCount(int numberOfInputs)
 {
-	nInputs = numberOfInputs;
+	_intputCount = numberOfInputs;
 }
 
 void Layer::setNeuronCount(int numberOfNeurons)
 {
-	nNeurons = numberOfNeurons;
+	_neuronCount = numberOfNeurons;
 }
 
 int Layer::getNeuronCount()
 {
-	return nNeurons;
+	return _neuronCount;
 }
 
 int Layer::getInputCount()
 {
-	return nInputs;
+	return _intputCount;
+}
+
+float * Layer::getWeights()
+{
+	return _weights;
+}
+
+float * Layer::getBiases()
+{
+	return _biases;
 }
